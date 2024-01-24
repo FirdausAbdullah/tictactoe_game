@@ -37,8 +37,26 @@ const gameBoard = (function(){
         if(board[position].showContent()!=''){return true;}
         else {return false;}
     }
-
-    return {showBoard,editBoard}
+    
+    function winning(player) {
+        let cboard = board.map((square)=>{return square.showContent()});
+        console.log(cboard);
+        if (
+          (cboard[0] == player && cboard[1] == player && cboard[2] == player) ||
+          (cboard[3] == player && cboard[4] == player && cboard[5] == player) ||
+          (cboard[6] == player && cboard[7] == player && cboard[8] == player) ||
+          (cboard[0] == player && cboard[3] == player && cboard[6] == player) ||
+          (cboard[1] == player && cboard[4] == player && cboard[7] == player) ||
+          (cboard[2] == player && cboard[5] == player && cboard[8] == player) ||
+          (cboard[0] == player && cboard[4] == player && cboard[8] == player) ||
+          (cboard[2] == player && cboard[4] == player && cboard[6] == player)
+        ) {
+          return true;
+        } else {
+          return false;
+        }
+      }
+    return {showBoard,editBoard,winning}
 })();
 
 
@@ -54,18 +72,30 @@ function Square(position){
 }
 
 const turn = (function(){
+
+    let turn = '';
+
     function assignEmblem(choice){
         if(choice == 'X'){
             player.setToken('X');
             computer.setToken('O');
+            turn = 'player';
         }
         if(choice == 'O') {
             player.setToken('O');
             computer.setToken('X');
+            turn = 'computer';
         }
     }
 
-    return {assignEmblem};
+    function setCurrentTurn(who){
+        turn = who;
+    }
+
+    function whoseTurn(){
+        return turn;
+    }
+    return {assignEmblem,whoseTurn,setCurrentTurn};
 })();
 
 
@@ -90,20 +120,34 @@ const computer = (function(){
                 return;
             }
         }
-    }
+    } 
     function showToken(){return token;}
     function setToken(choice){token = choice;}
     return{showToken,makeMove,setToken}
 })();
 
 
+//event - player clicked an emblem
 choice = 'O'
 turn.assignEmblem(choice);
-console.log(player.showToken());
-console.log(computer.showToken());
-console.log(gameBoard.showBoard());
-player.makeMove(2);
-computer.makeMove();
-console.dir(gameBoard.showBoard());
+//if turn.turnFirst == computer, 
+//1.computer makemove
+//2.set turn to player
+//else nothing happened - wait for user event
 
+//event-player clicked a square
+//
+// player.makeMove(1);
+// player.makeMove(5);
+// player.makeMove(7);
+// console.log(gameBoard.winning(choice));
+// console.log(gameBoard.showBoard());
 
+//user make a choice x\o
+//if x, user turn
+//if o comp turn
+//round 
+//  turn1.makemove
+//  checkWin
+//  yes turn1 wins
+//  no turn2.makemove
