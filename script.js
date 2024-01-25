@@ -1,3 +1,4 @@
+
 const gameBoard = (function(){
     let board = [];
     const boardRow = 3;
@@ -22,7 +23,8 @@ const gameBoard = (function(){
 
     function editBoard(token,position){
         if(checkBoard(position)) {
-            return console.log('cannot make move');
+            alert('cannot make move!');
+            return false;
         }
         board.map((cell)=>{
             if(cell.position == position){
@@ -31,6 +33,11 @@ const gameBoard = (function(){
             }
             else return cell.showContent();
         });
+        return true;
+    }
+
+    function clearBoard(){
+        board.map((cell)=>{return cell.changeContent('');});
     }
 
     function checkBoard(position){
@@ -56,7 +63,7 @@ const gameBoard = (function(){
           return false;
         }
       }
-    return {showBoard,editBoard,winning}
+    return {showBoard,editBoard,clearBoard,winning}
 })();
 
 
@@ -84,18 +91,42 @@ const turn = (function(){
         if(choice == 'O') {
             player.setToken('O');
             computer.setToken('X');
-            turn = 'computer';
+            setCurrentTurn('computer');
         }
     }
 
     function setCurrentTurn(who){
         turn = who;
+        if(turn=='computer'){
+            interface.updateTurn(computer.showToken());
+            computer.makeMove();
+            interface.updateScreen(gameBoard);
+            turn='player';
+            interface.updateTurn(player.showToken());
+            return;
+        }
+        
     }
 
     function whoseTurn(){
         return turn;
     }
-    return {assignEmblem,whoseTurn,setCurrentTurn};
+
+    
+    function xChosen(e){
+        if(turn==''){
+            assignEmblem(e.target.innerText);
+            interface.updateTurn(e.target.innerText);
+        }
+    }
+    function oChosen(e){
+        if(turn==''){
+            assignEmblem(e.target.innerText);
+            interface.updateTurn(e.target.innerText);
+        }
+    }
+
+    return {xChosen,oChosen,whoseTurn,setCurrentTurn};
 })();
 
 
@@ -105,7 +136,8 @@ const player = (function(){
     function setToken(choice){token = choice;}
     function makeMove(position){
         if (token!=''){
-        gameBoard.editBoard(token,position);}
+        return gameBoard.editBoard(token,position);
+        }
     }
     return {showToken,setToken,makeMove};
 })();
@@ -126,10 +158,64 @@ const computer = (function(){
     return{showToken,makeMove,setToken}
 })();
 
+function newGame(){
+    turn.setCurrentTurn('');
+    player.setToken('');
+    computer.setToken('');
+    gameBoard.clearBoard();
+    interface.updateScreen(gameBoard);
+    interface.updateTurn();   
+}
 
-//event - player clicked an emblem
-choice = 'O'
-turn.assignEmblem(choice);
+function squareClicked(e){
+    if(turn.whoseTurn()=='player'){
+        let success = player.makeMove(e.target.id);
+        interface.updateScreen(gameBoard);
+        if(success){
+            turn.setCurrentTurn('computer');
+        };
+    }
+    else return;
+}
+
+
+const interface = (function(){
+    const square = document.querySelectorAll('.cell');
+    square.forEach((sq)=>{sq.addEventListener('click',squareClicked);});
+    const newGameBtn = document.querySelector('#newGame');
+    newGameBtn.addEventListener('click',newGame);
+    
+    const xBtn = document.querySelector('#X');
+    xBtn.addEventListener('click',turn.xChosen);
+
+    const oBtn = document.querySelector('#O');
+    oBtn.addEventListener('click',turn.oChosen);
+
+    function updateScreen(board){
+        square.forEach((sq)=>{sq.innerText = board.showBoard()[sq.id].content});   
+    }
+
+    function updateTurn(btn){
+        if(btn=='X'){
+            xBtn.style.backgroundColor = 'red';
+            oBtn.style.backgroundColor = 'lightslategrey';
+        }
+        else if(btn=='O'){
+            xBtn.style.backgroundColor = 'lightslategrey';
+            oBtn.style.backgroundColor = 'red';
+        }
+        else {
+            xBtn.style.backgroundColor = 'lightslategrey';
+            oBtn.style.backgroundColor = 'lightslategrey';}
+    }
+
+    return {updateScreen,updateTurn};
+})();
+
+
+//event - player clicked an emblem 
+// set turn to who is X - turn.assignEmblem
+
 //if turn.turnFirst == computer, 
 //1.computer makemove
 //2.set turn to player
