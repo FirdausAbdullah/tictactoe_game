@@ -48,6 +48,7 @@ const gameBoard = (function(){
     function winning(player) {
         let cboard = board.map((square)=>{return square.showContent()});
         console.log(cboard);
+        if(player==''){return false;}
         if (
           (cboard[0] == player && cboard[1] == player && cboard[2] == player) ||
           (cboard[3] == player && cboard[4] == player && cboard[5] == player) ||
@@ -58,9 +59,10 @@ const gameBoard = (function(){
           (cboard[0] == player && cboard[4] == player && cboard[8] == player) ||
           (cboard[2] == player && cboard[4] == player && cboard[6] == player)
         ) {
-          return true;
+            turn.setWinner(player);
+            return true;
         } else {
-          return false;
+            return false;
         }
       }
     return {showBoard,editBoard,clearBoard,winning}
@@ -81,7 +83,7 @@ function Square(position){
 const turn = (function(){
 
     let turn = '';
-
+    let winner = '';
     function assignEmblem(choice){
         if(choice == 'X'){
             player.setToken('X');
@@ -101,6 +103,8 @@ const turn = (function(){
             interface.updateTurn(computer.showToken());
             computer.makeMove();
             interface.updateScreen(gameBoard);
+            gameBoard.winning(computer.showToken());
+            if(checkWinner()){return}
             turn='player';
             interface.updateTurn(player.showToken());
             return;
@@ -125,8 +129,23 @@ const turn = (function(){
             interface.updateTurn(e.target.innerText);
         }
     }
+    function checkWinner(){
+        if(winner==player.showToken()){
+            console.log('Player Wins!');
+            // newGame();
+            return true;
+        }
+        else if(winner==computer.showToken()){
+            console.log('Computer Wins!');
+            // newGame();
+            return true;
+        }
+        else {return false;}
+    }
+    
+    function setWinner(whoWins){winner=whoWins;}
 
-    return {xChosen,oChosen,whoseTurn,setCurrentTurn};
+    return {xChosen,oChosen,whoseTurn,setCurrentTurn,checkWinner,setWinner};
 })();
 
 
@@ -162,6 +181,7 @@ function newGame(){
     turn.setCurrentTurn('');
     player.setToken('');
     computer.setToken('');
+    turn.setWinner('');
     gameBoard.clearBoard();
     interface.updateScreen(gameBoard);
     interface.updateTurn();   
@@ -171,6 +191,8 @@ function squareClicked(e){
     if(turn.whoseTurn()=='player'){
         let success = player.makeMove(e.target.id);
         interface.updateScreen(gameBoard);
+        gameBoard.winning(player.showToken());
+        if(turn.checkWinner()){return}
         if(success){
             turn.setCurrentTurn('computer');
         };
