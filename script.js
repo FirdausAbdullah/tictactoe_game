@@ -47,7 +47,6 @@ const gameBoard = (function(){
     
     function winning(player) {
         let cboard = board.map((square)=>{return square.showContent()});
-        console.log(cboard);
         if(player==''){return false;}
         if (
           (cboard[0] == player && cboard[1] == player && cboard[2] == player) ||
@@ -65,7 +64,16 @@ const gameBoard = (function(){
             return false;
         }
       }
-    return {showBoard,editBoard,clearBoard,winning}
+
+      function availableSpace(){
+        let freeSpace=board.filter((sq)=>{return sq.showContent()==''});
+        if(freeSpace.length==0){
+            return false;
+        }
+        else {return true;}
+      }
+
+    return {showBoard,editBoard,clearBoard,winning,availableSpace}
 })();
 
 
@@ -131,13 +139,15 @@ const turn = (function(){
     }
     function checkWinner(){
         if(winner==player.showToken()){
-            console.log('Player Wins!');
-            // newGame();
+            interface.displayWinner('Player');
             return true;
         }
         else if(winner==computer.showToken()){
-            console.log('Computer Wins!');
-            // newGame();
+            interface.displayWinner('Computer');
+            return true;
+        }
+        else if(!gameBoard.availableSpace()){
+            interface.displayWinner('Draw');
             return true;
         }
         else {return false;}
@@ -155,7 +165,7 @@ const player = (function(){
     function setToken(choice){token = choice;}
     function makeMove(position){
         if (token!=''){
-        return gameBoard.editBoard(token,position);
+            return gameBoard.editBoard(token,position);
         }
     }
     return {showToken,setToken,makeMove};
@@ -164,6 +174,7 @@ const player = (function(){
 const computer = (function(){
     let token = '';
     function makeMove(){
+        if(turn.checkWinner()){return}
         while(1){
             let rando = Math.floor(Math.random() * 8);
             if(gameBoard.showBoard()[rando].content == ''){
@@ -188,6 +199,7 @@ function newGame(){
 }
 
 function squareClicked(e){
+    if(turn.checkWinner()){return}
     if(turn.whoseTurn()=='player'){
         let success = player.makeMove(e.target.id);
         interface.updateScreen(gameBoard);
@@ -206,12 +218,19 @@ const interface = (function(){
     square.forEach((sq)=>{sq.addEventListener('click',squareClicked);});
     const newGameBtn = document.querySelector('#newGame');
     newGameBtn.addEventListener('click',newGame);
-    
+    let announceWinner = document.querySelector('.announceWinner');
+    let overlay = document.querySelector('.overlay');
+
     const xBtn = document.querySelector('#X');
     xBtn.addEventListener('click',turn.xChosen);
 
     const oBtn = document.querySelector('#O');
     oBtn.addEventListener('click',turn.oChosen);
+
+    const exitBtn = document.querySelector('.exit');
+    exitBtn.addEventListener('click',removeWinner);
+
+    let winner = document.querySelector('#winner');
 
     function updateScreen(board){
         square.forEach((sq)=>{sq.innerText = board.showBoard()[sq.id].content});   
@@ -231,31 +250,21 @@ const interface = (function(){
             oBtn.style.backgroundColor = 'lightslategrey';}
     }
 
-    return {updateScreen,updateTurn};
+    function displayWinner(who){
+        announceWinner.classList=Array.from(announceWinner.classList).shift();
+        overlay.classList=Array.from(overlay.classList).shift();
+        if(who=='Draw'){
+            winner.innerText = who;
+        }
+        else{winner.innerText = who + " Wins !";}
+    }
+
+    function removeWinner(){
+        winner.innerText = '';
+        newGame();
+        announceWinner.classList += ' hide';
+        overlay.classList += ' hide';
+    }
+
+    return {updateScreen,updateTurn,displayWinner};
 })();
-
-
-//event - player clicked an emblem 
-// set turn to who is X - turn.assignEmblem
-
-//if turn.turnFirst == computer, 
-//1.computer makemove
-//2.set turn to player
-//else nothing happened - wait for user event
-
-//event-player clicked a square
-//
-// player.makeMove(1);
-// player.makeMove(5);
-// player.makeMove(7);
-// console.log(gameBoard.winning(choice));
-// console.log(gameBoard.showBoard());
-
-//user make a choice x\o
-//if x, user turn
-//if o comp turn
-//round 
-//  turn1.makemove
-//  checkWin
-//  yes turn1 wins
-//  no turn2.makemove
